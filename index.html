@@ -15,20 +15,21 @@
         
         /* Login Page */
         #login-page { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        .login-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        .login-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 300px; text-align: center; }
         .logo { color: var(--fb-blue); font-size: 45px; font-weight: bold; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .google-btn { background: #db4437; color: white; }
 
-        /* Feed */
+        /* Main Feed */
         #main-feed { display: none; }
         .navbar { background: var(--fb-blue); color: white; padding: 10px 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         .container { max-width: 550px; margin: 20px auto; padding: 0 10px; }
-        .create-post { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        textarea { width: 100%; border: none; background: #f0f2f5; border-radius: 20px; padding: 15px; outline: none; box-sizing: border-box; resize: none; }
-        .post-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .user-name { font-weight: bold; color: #1c1e21; }
+        .create-post { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        textarea { width: 100%; border: none; background: #f0f2f5; border-radius: 20px; padding: 15px; outline: none; box-sizing: border-box; }
+        .post-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .user-name { font-weight: bold; color: #1c1e21; margin-bottom: 5px; display: block; }
         .time { font-size: 12px; color: #65676b; }
+        .post-text { margin-top: 10px; font-size: 15px; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -43,7 +44,7 @@
     <div id="main-feed">
         <nav class="navbar">
             <h2>Rehan Book</h2>
-            <button onclick="logout()" style="background:none; border:1px solid white; color:white; cursor:pointer; border-radius:4px;">Logout</button>
+            <button onclick="logout()" style="background:none; border:1px solid white; color:white; cursor:pointer; border-radius:5px; padding:5px 10px;">Logout</button>
         </nav>
 
         <div class="container">
@@ -56,69 +57,76 @@
     </div>
 
     <script>
-        // Aapka Config Code
+        // --- APKA FIREBASE CONFIG ---
         const firebaseConfig = {
-          apiKey: "AIzaSyDJHm7d366d-oJitqMoEKX5BWM4Xrokq1E",
-          authDomain: "rehanbook.firebaseapp.com",
-          projectId: "rehanbook",
-          storageBucket: "rehanbook.firebasestorage.app",
-          messagingSenderId: "727125960788",
-          appId: "1:727125960788:web:0bdd3720723023a2eae5c1",
-          measurementId: "G-3VSV8FNJQG"
+            apiKey: "AIzaSyDJHm7d366d-ojitqNoEXSBM4Xrokq1E",
+            authDomain: "rehanbook.firebaseapp.com",
+            projectId: "rehanbook",
+            storageBucket: "rehanbook.firebasestorage.app",
+            messagingSenderId: "727125060788",
+            appId: "1:727125060788:web:0bdd3720723023a2eae5c1",
+            measurementId: "G-7VSVBFNJQG"
         };
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Login Function
-        function login() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider);
-        }
-
-        // Logout Function
-        function logout() { auth.signOut(); }
-
-        // Auth Listener
-        auth.onAuthStateChanged(user => {
+        // --- AUTH LISTENER (Login Yaad Rakhne Ke Liye) ---
+        auth.onAuthStateChanged((user) => {
             if (user) {
+                // User login hai
                 document.getElementById('login-page').style.display = 'none';
                 document.getElementById('main-feed').style.display = 'block';
                 loadPosts();
             } else {
+                // User login nahi hai
                 document.getElementById('login-page').style.display = 'flex';
                 document.getElementById('main-feed').style.display = 'none';
             }
         });
 
-        // Add Post
-        async function uploadPost() {
-            const text = document.getElementById('postText').value;
-            if(!text) return;
-
-            await db.collection("posts").add({
-                name: auth.currentUser.displayName,
-                text: text,
-                time: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            document.getElementById('postText').value = "";
+        // Login Function
+        function login() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(err => alert(err.message));
         }
 
-        // Real-time Posts
-        function loadPosts() {
-            db.collection("posts").orderBy("time", "desc").onSnapshot(snap => {
-                let html = "";
-                snap.forEach(doc => {
-                    const p = doc.data();
-                    html += `
-                        <div class="post-card">
-                            <div class="user-name">${p.name}</div>
-                            <div class="time">${p.time ? p.time.toDate().toLocaleString() : 'Just now'}</div>
-                            <p>${p.text}</p>
-                        </div>`;
+        // Logout Function
+        function logout() {
+            auth.signOut();
+        }
+
+        // Post Upload Function
+        function uploadPost() {
+            const text = document.getElementById('postText').value;
+            const user = auth.currentUser;
+
+            if (text.trim() !== "" && user) {
+                db.collection("posts").add({
+                    text: text,
+                    userName: user.displayName,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    document.getElementById('postText').value = "";
                 });
-                document.getElementById('posts').innerHTML = html;
+            }
+        }
+
+        // Posts Load Function
+        function loadPosts() {
+            db.collection("posts").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+                const postsDiv = document.getElementById('posts');
+                postsDiv.innerHTML = "";
+                snapshot.forEach((doc) => {
+                    const post = doc.data();
+                    postsDiv.innerHTML += `
+                        <div class="post-card">
+                            <span class="user-name">${post.userName || 'Anonymous'}</span>
+                            <div class="post-text">${post.text}</div>
+                        </div>
+                    `;
+                });
             });
         }
     </script>
